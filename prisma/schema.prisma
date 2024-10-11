@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int               @id @default(autoincrement())
+  email     String            @unique
+  password  String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  responses ChatGptResponse[]
+
+  @@index([id])
+}
+
+model ChatGptResponse {
+  id           Int           @id @default(autoincrement())
+  title        String
+  createdAt    DateTime      @default(now())
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id])
+  jsonContents JsonContent[]
+
+  @@index([userId])
+}
+
+model JsonContent {
+  key        String
+  value      String
+  responseId Int
+  id         Int             @id @default(autoincrement())
+  response   ChatGptResponse @relation(fields: [responseId], references: [id])
+  subtopics  Subtopics[]
+
+  @@index([responseId])
+}
+
+model Subtopics {
+  id        Int         @id @default(autoincrement())
+  titles    String
+  JsonId    Int
+  contents  Content[]
+  subtopics JsonContent @relation(fields: [JsonId], references: [id])
+
+  @@index([JsonId])
+}
+
+model Content {
+  id            Int            @id @default(autoincrement())
+  content       String
+  SubtopicId    Int
+  subtopic      Subtopics      @relation(fields: [SubtopicId], references: [id])
+  quizzes       Quiz[]
+  megaQuestions MegaQuestions[]
+
+  @@index([SubtopicId])
+}
+
+model Quiz {
+  id          Int      @id @default(autoincrement())
+  ContentId   Int
+  quizcontent Json
+  content     Content  @relation(fields: [ContentId], references: [id])
+
+  @@index([ContentId])
+}
+
+model MegaQuestions {
+  id              String   @id @default(uuid())
+  ContentId       Int
+  megaAssessment  Json[]
+  content         Content  @relation(fields: [ContentId], references: [id])
+  @@index([ContentId])
+}
